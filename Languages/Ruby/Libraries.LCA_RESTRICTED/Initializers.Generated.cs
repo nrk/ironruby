@@ -3713,7 +3713,7 @@ namespace IronRuby.Builtins {
             #endif
             DefineLibraryMethod(module, "=~", 0x51, 
                 0x00000000U, 
-                new Func<System.Object, System.Object, System.Boolean>(IronRuby.Builtins.KernelOps.Match)
+                new Func<System.Object, System.Object, System.Object>(IronRuby.Builtins.KernelOps.Match)
             );
             
             DefineLibraryMethod(module, "==", 0x51, 
