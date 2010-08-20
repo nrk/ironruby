@@ -7429,8 +7429,9 @@ namespace IronRuby.Builtins {
             );
             
             DefineLibraryMethod(module, "pop", 0x51, 
-                0x00000000U, 
-                new Func<System.Collections.IList, System.Object>(IronRuby.Builtins.IListOps.Pop)
+                0x00000000U, 0x00020000U, 
+                new Func<System.Collections.IList, System.Object>(IronRuby.Builtins.IListOps.Pop), 
+                new Func<IronRuby.Runtime.RubyContext, System.Collections.IList, System.Int32, System.Object>(IronRuby.Builtins.IListOps.Pop)
             );
             
             DefineLibraryMethod(module, "push", 0x51, 
