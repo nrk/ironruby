@@ -225,6 +225,10 @@ namespace IronRuby.Builtins {
         /// <returns>self divided by other as Float</returns>
         [RubyMethod("div")]
         public static object Divide(BigInteger/*!*/ self, double other) {
+            if (other == 0.0) {
+                throw new FloatDomainError("NaN");
+            }
+
             return DivMod(self, other)[0];
         }
 
@@ -274,6 +278,9 @@ namespace IronRuby.Builtins {
         /// <remarks>Converts self and other to Float and then divides.</remarks>
         [RubyMethod("quo")]
         public static object Quotient(BigInteger/*!*/ self, int other) {
+            if (other == 0) {
+                throw new DivideByZeroException();
+            }
             return Quotient(self, (double)other);
         }
 
@@ -383,9 +390,6 @@ namespace IronRuby.Builtins {
         /// <remarks>Calls divmod directly to get the modulus.</remarks>
         [RubyMethod("%"), RubyMethod("modulo")]
         public static object Modulo(BigInteger/*!*/ self, double other) {
-            if (other == 0.0) {
-                return Double.NaN;
-            }
             RubyArray result = DivMod(self, other);
             return result[1];
         }
@@ -457,6 +461,9 @@ namespace IronRuby.Builtins {
         [RubyMethod("divmod")]
         public static RubyArray DivMod(BigInteger/*!*/ self, double other) {
             if (other == 0.0) {
+                throw new DivideByZeroException();
+            }
+            if (Double.IsNaN(other)) {
                 throw new FloatDomainError("NaN");
             }
 
@@ -521,6 +528,10 @@ namespace IronRuby.Builtins {
         /// <returns>Float</returns>
         [RubyMethod("remainder")]
         public static double Remainder(BigInteger/*!*/ self, double other) {
+            if (other == 0.0) {
+                throw new DivideByZeroException();
+            }
+
             return self.ToFloat64() % other;
         }
 
@@ -579,6 +590,9 @@ namespace IronRuby.Builtins {
         /// </remarks>
         [RubyMethod("<=>")]
         public static object Compare(RubyContext/*!*/ context, BigInteger/*!*/ self, double other) {
+            if (self.IsNegative() && Double.IsNegativeInfinity(other)) {
+                return 1;
+            }
             return ClrFloat.Compare(ToFloat(context, self), other);
         }
 
@@ -773,6 +787,11 @@ namespace IronRuby.Builtins {
             return Protocols.Normalize(self | other);
         }
 
+        [RubyMethod("|")]
+        public static object/*!*/ BitwiseOr(BigInteger/*!*/ self, double other) {
+            throw RubyExceptions.CreateTypeConversionError("Float", "Integer");
+        }
+
         /// <summary>
         /// Performs bitwise or between self and other, where other is not Fixnum or Bignum. 
         /// </summary>
@@ -796,6 +815,11 @@ namespace IronRuby.Builtins {
             return Protocols.Normalize(self & other);
         }
 
+        [RubyMethod("&")]
+        public static object/*!*/ And(BigInteger/*!*/ self, double other) {
+            throw RubyExceptions.CreateTypeConversionError("Float", "Integer");
+        }
+
         /// <summary>
         /// Performs bitwise and between self and other, where other is not Fixnum or Bignum. 
         /// </summary>
@@ -817,6 +841,11 @@ namespace IronRuby.Builtins {
         [RubyMethod("^")]
         public static object/*!*/ Xor(BigInteger/*!*/ self, [NotNull]BigInteger/*!*/ other) {
             return Protocols.Normalize(self ^ other);
+        }
+
+        [RubyMethod("^")]
+        public static object/*!*/ Xor(BigInteger/*!*/ self, double other) {
+            throw RubyExceptions.CreateTypeConversionError("Float", "Integer");
         }
 
         /// <summary>
@@ -970,6 +999,20 @@ namespace IronRuby.Builtins {
         [RubyMethod("hash")]
         public static int Hash(BigInteger/*!*/ self) {
             return self.GetHashCode();
+        }
+
+        #endregion
+
+        #region even?, odd?
+
+        [RubyMethod("even?")]
+        public static bool IsEven(BigInteger/*!*/ self) {
+            return self % 2 == 0;
+        }
+
+        [RubyMethod("odd?")]
+        public static bool IsOdd(BigInteger/*!*/ self) {
+            return self % 2 != 0;
         }
 
         #endregion

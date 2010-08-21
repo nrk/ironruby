@@ -646,6 +646,14 @@ namespace IronRuby.Builtins {
             if (Double.IsNaN(self)) {
                 return null;
             }
+            if (Double.IsInfinity(self)) {
+                if (Double.IsPositiveInfinity(self)) {
+                    return 1;
+                }
+                if (Double.IsNegativeInfinity(self) && other.IsNegative()) {
+                    return -1;
+                }
+            }
             return self.CompareTo(Protocols.ConvertToDouble(context, other));
         }
 

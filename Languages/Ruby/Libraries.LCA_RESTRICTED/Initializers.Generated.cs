@@ -2771,9 +2771,10 @@ namespace IronRuby.Builtins {
             );
             
             DefineLibraryMethod(module, "&", 0x51, 
-                0x00000000U, 0x00000002U, 0x00020000U, 
+                0x00000000U, 0x00000002U, 0x00000000U, 0x00020000U, 
                 new Func<Microsoft.Scripting.Math.BigInteger, System.Int32, System.Object>(IronRuby.Builtins.ClrBigInteger.And), 
                 new Func<Microsoft.Scripting.Math.BigInteger, Microsoft.Scripting.Math.BigInteger, System.Object>(IronRuby.Builtins.ClrBigInteger.And), 
+                new Func<Microsoft.Scripting.Math.BigInteger, System.Double, System.Object>(IronRuby.Builtins.ClrBigInteger.And), 
                 new Func<IronRuby.Runtime.RubyContext, Microsoft.Scripting.Math.BigInteger, IronRuby.Runtime.IntegerValue, System.Object>(IronRuby.Builtins.ClrBigInteger.And)
             );
             
@@ -2813,16 +2814,18 @@ namespace IronRuby.Builtins {
             );
             
             DefineLibraryMethod(module, "^", 0x51, 
-                0x00000000U, 0x00000002U, 0x00020000U, 
+                0x00000000U, 0x00000002U, 0x00000000U, 0x00020000U, 
                 new Func<Microsoft.Scripting.Math.BigInteger, System.Int32, System.Object>(IronRuby.Builtins.ClrBigInteger.Xor), 
                 new Func<Microsoft.Scripting.Math.BigInteger, Microsoft.Scripting.Math.BigInteger, System.Object>(IronRuby.Builtins.ClrBigInteger.Xor), 
+                new Func<Microsoft.Scripting.Math.BigInteger, System.Double, System.Object>(IronRuby.Builtins.ClrBigInteger.Xor), 
                 new Func<IronRuby.Runtime.RubyContext, Microsoft.Scripting.Math.BigInteger, IronRuby.Runtime.IntegerValue, System.Object>(IronRuby.Builtins.ClrBigInteger.Xor)
             );
             
             DefineLibraryMethod(module, "|", 0x51, 
-                0x00000000U, 0x00000002U, 0x00020000U, 
+                0x00000000U, 0x00000002U, 0x00000000U, 0x00020000U, 
                 new Func<Microsoft.Scripting.Math.BigInteger, System.Int32, System.Object>(IronRuby.Builtins.ClrBigInteger.BitwiseOr), 
                 new Func<Microsoft.Scripting.Math.BigInteger, Microsoft.Scripting.Math.BigInteger, System.Object>(IronRuby.Builtins.ClrBigInteger.BitwiseOr), 
+                new Func<Microsoft.Scripting.Math.BigInteger, System.Double, System.Object>(IronRuby.Builtins.ClrBigInteger.BitwiseOr), 
                 new Func<IronRuby.Runtime.RubyContext, Microsoft.Scripting.Math.BigInteger, IronRuby.Runtime.IntegerValue, System.Object>(IronRuby.Builtins.ClrBigInteger.BitwiseOr)
             );
             
@@ -2903,6 +2906,11 @@ namespace IronRuby.Builtins {
                 new Func<Microsoft.Scripting.Math.BigInteger, System.Object, System.Boolean>(IronRuby.Builtins.ClrBigInteger.Eql)
             );
             
+            DefineLibraryMethod(module, "even?", 0x51, 
+                0x00000000U, 
+                new Func<Microsoft.Scripting.Math.BigInteger, System.Boolean>(IronRuby.Builtins.ClrBigInteger.IsEven)
+            );
+            
             DefineLibraryMethod(module, "fdiv", 0x51, 
                 0x00000002U, 
                 new Func<Microsoft.Scripting.Math.BigInteger, Microsoft.Scripting.Math.BigInteger, System.Double>(IronRuby.Builtins.ClrBigInteger.FDiv)
@@ -2919,6 +2927,11 @@ namespace IronRuby.Builtins {
                 new Func<Microsoft.Scripting.Math.BigInteger, System.Int32, System.Object>(IronRuby.Builtins.ClrBigInteger.Modulo), 
                 new Func<Microsoft.Scripting.Math.BigInteger, System.Double, System.Object>(IronRuby.Builtins.ClrBigInteger.Modulo), 
                 new Func<IronRuby.Runtime.BinaryOpStorage, IronRuby.Runtime.BinaryOpStorage, System.Object, System.Object, System.Object>(IronRuby.Builtins.ClrBigInteger.Modulo)
+            );
+            
+            DefineLibraryMethod(module, "odd?", 0x51, 
+                0x00000000U, 
+                new Func<Microsoft.Scripting.Math.BigInteger, System.Boolean>(IronRuby.Builtins.ClrBigInteger.IsOdd)
             );
             
             DefineLibraryMethod(module, "quo", 0x51, 
