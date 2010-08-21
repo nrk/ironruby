@@ -715,11 +715,13 @@ namespace IronRuby.Builtins {
         }
 
         [RubyMethod("eql?")]
+        [RubyMethod("==")]
         public static bool Eql(RubyTime/*!*/ self, [NotNull]RubyTime/*!*/ other) {
             return self.Equals(other);
         }
 
         [RubyMethod("eql?")]
+        [RubyMethod("==")]
         public static bool Eql(RubyTime/*!*/ self, object other) {
             return false;
         }
@@ -995,6 +997,7 @@ namespace IronRuby.Builtins {
 
                     default:
                         if (context.RubyOptions.Compatibility > RubyCompatibility.Ruby186) {
+                            result.Append('%');
                             result.Append(character);
                             break;
                         } 

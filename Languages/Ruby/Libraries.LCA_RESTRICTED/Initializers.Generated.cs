@@ -8101,6 +8101,12 @@ namespace IronRuby.Builtins {
                 new Func<IronRuby.Builtins.RubyTime, System.Object, System.Object>(IronRuby.Builtins.RubyTimeOps.CompareSeconds)
             );
             
+            DefineLibraryMethod(module, "==", 0x51, 
+                0x00000002U, 0x00000000U, 
+                new Func<IronRuby.Builtins.RubyTime, IronRuby.Builtins.RubyTime, System.Boolean>(IronRuby.Builtins.RubyTimeOps.Eql), 
+                new Func<IronRuby.Builtins.RubyTime, System.Object, System.Boolean>(IronRuby.Builtins.RubyTimeOps.Eql)
+            );
+            
             DefineLibraryMethod(module, "asctime", 0x51, 
                 0x00000000U, 
                 new Func<IronRuby.Builtins.RubyTime, IronRuby.Builtins.MutableString>(IronRuby.Builtins.RubyTimeOps.CTime)
