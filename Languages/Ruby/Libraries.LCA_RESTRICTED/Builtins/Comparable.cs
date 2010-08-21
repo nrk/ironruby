@@ -92,10 +92,10 @@ namespace IronRuby.Builtins {
         }
 
         [RubyMethod("==")]
-        public static object Equal(BinaryOpStorage/*!*/ compareStorage, object self, object other) {
+        public static bool Equal(BinaryOpStorage/*!*/ compareStorage, object self, object other) {
 
             if (self == other) {
-                return ScriptingRuntimeHelpers.True;
+                return true;
             }
 
             // calls method_missing:
@@ -106,14 +106,16 @@ namespace IronRuby.Builtins {
                 compareResult = compare.Target(compare, self, other);
             } catch (SystemException) {
                 // catches StandardError (like rescue)
-                return null;
+                return false;
             }
 
-            if (compareResult == null || !(compareResult is int)) {
-                return null;
+            if (compareResult is int) {
+                return (int)compareResult == 0;
             }
-
-            return ScriptingRuntimeHelpers.BooleanToObject((int)compareResult == 0);
+            if (compareResult is double) {
+                return (double)compareResult == 0;
+            }
+            return false;
         }
     }
 }
