@@ -849,7 +849,9 @@ namespace IronRuby.Builtins {
         public static MutableString/*!*/ FormatTime(RubyContext/*!*/ context, RubyTime/*!*/ self, 
             [DefaultProtocol, NotNull]MutableString/*!*/ format) {
 
+            FormatSpecifierOptions options;
             MutableString result = MutableString.CreateMutable(format.Encoding);
+            MutableString optionsBuffer = MutableString.CreateMutable(format.Encoding);
             bool inFormat = false;
 
             var charEnum = format.GetCharacters();
@@ -860,65 +862,80 @@ namespace IronRuby.Builtins {
                 if (!inFormat) {
                     if (c == '%') {
                         inFormat = true;
-                    } else {
+                    }
+                    else {
                         result.Append(character);
                     }
                     continue;
-                } 
-                inFormat = false;
-                string dateTimeFormat = null;
+                }
+                else {
+                    if (context.RubyOptions.Compatibility > RubyCompatibility.Ruby186) {
+                        options = ExtractSpecifierOptions(charEnum, optionsBuffer);
+                        if (!optionsBuffer.IsEmpty) {
+                            character = charEnum.Current;
+                            c = character.IsValid ? character.Value : -1;
+                        }
+                    }
+                    else {
+                        options = new FormatSpecifierOptions();
+                    }
+                    inFormat = false;
+                }
+
                 switch (c) {
                     case '%':
-                        result.Append('%');
+                        Format(result, options, "%");
                         break;
 
                     case 'a':
-                        dateTimeFormat = "ddd";
+                        Format(result, options, "ddd", self);
                         break;
 
                     case 'A':
-                        dateTimeFormat = "dddd";
+                        Format(result, options, "dddd", self);
                         break;
 
                     case 'b':
-                        dateTimeFormat = "MMM";
+                    case 'h':
+                        Format(result, options, "MMM", self);
                         break;
 
                     case 'B':
-                        dateTimeFormat = "MMMM";
+                        Format(result, options, "MMMM", self);
                         break;
 
                     case 'c':
-                        dateTimeFormat = "g";
+                        Format(result, options, "g", self);
                         break;
 
                     case 'd':
-                        dateTimeFormat = "dd";
+                        Format(result, options, "dd", self);
                         break;
 
                     case 'D':
-                        dateTimeFormat = "MM/dd/yy";
+                        Format(result, options, "MM/dd/yy", self);
                         break;
 
                     case 'e': { // Day of the month, blank-padded ( 1..31)
                             int day = self.DateTime.Day;
                             if (day < 10) {
-                                result.Append(' ');
+                                options.PaddingLength -= 1;
+                                result.Append(options.PaddingCharacter);
                             }
-                            result.Append(day.ToString(CultureInfo.InvariantCulture));
+                            Format(result, options, day.ToString(CultureInfo.InvariantCulture));
                             break;
                         }
 
                     case 'H':
-                        dateTimeFormat = "HH";
+                        Format(result, options, "HH", self);
                         break;
 
                     case 'I':
-                        dateTimeFormat = "hh";
+                        Format(result, options, "hh", self);
                         break;
 
                     case 'j':
-                        result.AppendFormat("{0:000}", self.DateTime.DayOfYear);
+                        Format(result, options, String.Format("{0:000}", self.DateTime.DayOfYear));
                         break;
 
                     case 'l': {
@@ -929,67 +946,68 @@ namespace IronRuby.Builtins {
                                 hour -= 12;
                             }
                             if (hour < 10) {
-                                result.Append(' ');
+                                options.PaddingLength -= 1;
+                                result.Append(options.PaddingCharacter);
                             }
-                            result.Append(hour.ToString(CultureInfo.InvariantCulture));
+                            Format(result, options, hour.ToString(CultureInfo.InvariantCulture));
                             break;
                         }
 
                     case 'm':
-                        dateTimeFormat = "MM";
+                        Format(result, options, "MM", self);
                         break;
 
                     case 'M':
-                        dateTimeFormat = "mm";
+                        Format(result, options, "mm", self);
                         break;
 
                     case 'p':
-                        dateTimeFormat = "tt";
+                        Format(result, options, "tt", self);
                         break;
 
                     case 'S':
-                        dateTimeFormat = "ss";
+                        Format(result, options, "ss", self);
                         break;
 
                     case 'T':
-                        dateTimeFormat = "HH:mm:ss";
+                        Format(result, options, "HH:mm:ss", self);
                         break;
 
-                    case 'U': 
-                        FormatDayOfWeek(result, self.DateTime, 7);
+                    case 'U':
+                        FormatDayOfWeek(result, options, self.DateTime, 7);
                         break;
 
                     case 'W':
-                        FormatDayOfWeek(result, self.DateTime, 8); 
+                        FormatDayOfWeek(result, options, self.DateTime, 8); 
                         break;
 
                     case 'w':
-                        result.Append(((int)self.DateTime.DayOfWeek).ToString(CultureInfo.InvariantCulture));
+                        Format(result, options, ((int)self.DateTime.DayOfWeek).ToString(CultureInfo.InvariantCulture));
                         break;
 
                     case 'x':
-                        dateTimeFormat = "d";
+                        Format(result, options, "d", self);
                         break;
 
                     case 'X':
-                        dateTimeFormat = "t";
+                        Format(result, options, "t", self);
                         break;
 
                     case 'y':
-                        dateTimeFormat = "yy";
+                        Format(result, options, "yy", self);
                         break;
 
                     case 'Y':
-                        dateTimeFormat = "yyyy";
+                        Format(result, options, "yyyy", self);
                         break;
 
                     case 'Z':
-                        dateTimeFormat = "%K";
+                        Format(result, options, "%K", self);
                         break;
 
                     case 'z':
                         if (context.RubyOptions.Compatibility > RubyCompatibility.Ruby186) {
-                            result.Append(self.FormatUtcOffset());
+                            Format(result, options, self.FormatUtcOffset());
                         } else {
                             result.Append(RubyTime.GetCurrentZoneName());
                         }
@@ -998,14 +1016,11 @@ namespace IronRuby.Builtins {
                     default:
                         if (context.RubyOptions.Compatibility > RubyCompatibility.Ruby186) {
                             result.Append('%');
+                            result.Append(optionsBuffer);
                             result.Append(character);
                             break;
                         } 
                         return MutableString.CreateEmpty();
-                }
-
-                if (dateTimeFormat != null) {
-                    result.Append(self.ToString(dateTimeFormat, CultureInfo.InvariantCulture));
                 }
             }
 
@@ -1019,11 +1034,104 @@ namespace IronRuby.Builtins {
             return result;
         }
 
-        private static void FormatDayOfWeek(MutableString/*!*/ result, DateTime dateTime, int start) {
+        class FormatSpecifierOptions {
+            public FormatSpecifierOptions() {
+                PaddingCharacter = ' ';
+            }
+
+            public bool UpperCase { get; set; }
+            public bool PreventPadding { get; set; }
+            public char PaddingCharacter { get; set; }
+            public int PaddingLength { get; set; }
+        }
+
+        private static FormatSpecifierOptions ExtractSpecifierOptions(MutableString.CharacterEnumerator charEnum, MutableString optionsBuffer) {
+            FormatSpecifierOptions options = new FormatSpecifierOptions();
+            optionsBuffer.Clear();
+
+            // Extract the options for the current format specifier
+            while (charEnum.HasMore) {
+                var character = charEnum.Current;
+                int c = character.IsValid ? character.Value : -1;
+                switch (c) {
+                    case '_':   // Pad with spaces
+                        options.PaddingCharacter = ' ';
+                        optionsBuffer.Append((char)c);
+                        charEnum.MoveNext();
+                        continue;
+
+                    case '0':   // Pad with zero
+                        options.PaddingCharacter = '0';
+                        optionsBuffer.Append((char)c);
+                        charEnum.MoveNext();
+                        continue;
+
+                    case '-':   // Do not pad (overriding any pad option)
+                        options.PreventPadding = true;
+                        optionsBuffer.Append((char)c);
+                        charEnum.MoveNext();
+                        continue;
+
+                    case '^':   // To uppercase
+                        options.UpperCase = true;
+                        optionsBuffer.Append((char)c);
+                        charEnum.MoveNext();
+                        continue;
+                }
+                break;
+            }
+
+            // Extract the padding length
+            string padLengthBuffer = String.Empty;
+            while (charEnum.HasMore) {
+                var character = charEnum.Current;
+                int c = character.IsValid ? character.Value : -1;
+                switch (c) {
+                    case '0':
+                    case '1':
+                    case '2':
+                    case '3':
+                    case '4':
+                    case '5':
+                    case '6':
+                    case '7':
+                    case '8':
+                    case '9':
+                        padLengthBuffer += (char)c;
+                        charEnum.MoveNext();
+                        continue;
+                }
+                break;
+            }
+
+            if (padLengthBuffer != String.Empty) {
+                int padLen;
+                options.PaddingLength = Int32.TryParse(padLengthBuffer, out padLen) ? padLen : 0;
+                optionsBuffer.Append(padLengthBuffer);
+            }
+
+            return options;
+        }
+
+        private static void FormatDayOfWeek(MutableString/*!*/ result, FormatSpecifierOptions options, DateTime dateTime, int start) {
             DateTime firstDay = dateTime.AddDays(1 - dateTime.DayOfYear);
             DateTime firstSunday = firstDay.AddDays((start - (int)firstDay.DayOfWeek) % 7);
             int week = 1 + (int)Math.Floor((dateTime - firstSunday).Days / 7.0);
-            result.AppendFormat("{0:00}", week);
+            Format(result, options, String.Format("{0:00}", week));
+        }
+
+        private static void Format(MutableString result, FormatSpecifierOptions options, String format, RubyTime time) {
+            Format(result, options, time.DateTime.ToString(format, CultureInfo.InvariantCulture));
+        }
+
+        private static void Format(MutableString result, FormatSpecifierOptions options, String str) {
+            if (options.UpperCase) {
+                str = str.ToUpperInvariant();
+            }
+            if (options.PaddingLength > 0 && !options.PreventPadding) {
+                str = str.PadLeft(options.PaddingLength, options.PaddingCharacter);
+            }
+            result.Append(str);
         }
 
         #endregion
