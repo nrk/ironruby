@@ -1,9 +1,6 @@
 fails:Array#pack sequentially processes each pack format, which consumes element in the array, and finally concatenates their result
 fails:Array#pack ignores white spaces
-fails:Array#pack returns a tainted string when the format is tainted
-fails:Array#pack returns a tainted string when the format is tainted even if the given format is empty
-fails:Array#pack returns a untrusted string when the format is untrusted
-fails:Array#pack returns a untrusted string when the format is untrusted even if the given format is empty
+fails:Array#pack returns a untrusted string when a pack argument is untrusted
 fails:Array#pack returns a string in encoding of common to the concatenated results
 fails:Array#pack with the empty format returns an empty String in US-ASCII
 fails:Array#pack with format 'A' treats a multibyte character just as a byte sequence
