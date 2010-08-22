@@ -1468,6 +1468,8 @@ namespace IronRuby.Builtins {
 
         [RubyMethod("pop")]
         public static object Pop(IList/*!*/ self) {
+            RequireNotFrozen(self);
+
             if (self.Count == 0) {
                 return null;
             }
