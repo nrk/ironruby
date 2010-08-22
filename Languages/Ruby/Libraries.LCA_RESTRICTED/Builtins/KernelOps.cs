@@ -153,6 +153,35 @@ namespace IronRuby.Builtins {
             return value;
         }
 
+        [RubyMethod("Float", RubyMethodAttributes.PrivateInstance)]
+        [RubyMethod("Float", RubyMethodAttributes.PublicSingleton)]
+        public static double/*!*/ ToFloat(RubyContext/*!*/ context, object self, [NotNull]MutableString/*!*/ value) {
+            var str = value.ConvertToString().Trim();
+
+            if (str.IndexOf('\0', 0) != -1) {
+                throw RubyExceptions.CreateArgumentError("string for Float contains null byte");
+            }
+
+            int indexOfUnderscore = str.IndexOf('_');
+            if (indexOfUnderscore == 0 || indexOfUnderscore == str.Length - 1) {
+                throw RubyExceptions.CreateArgumentError("invalid value for Float(): \"{0}\"", value);
+            }
+
+            int indexOfE = str.IndexOfAny(new [] { 'e', 'E' });
+            if (indexOfE != -1) {
+                if (indexOfE == 0 || indexOfE == str.Length - 1) {
+                    throw RubyExceptions.CreateArgumentError("invalid value for Float(): \"{0}\"", value);
+                }
+                char prev = str[indexOfE - 1];
+                char next = str[indexOfE + 1];
+                if (prev == ' ' || prev == '_' || next == ' ' || next == '_') {
+                    throw RubyExceptions.CreateArgumentError("invalid value for Float(): \"{0}\"", value);
+                }
+            }
+
+            return RubyOps.ConvertStringToFloat(context, str);
+        }
+
         [RubyMethod("Integer", RubyMethodAttributes.PrivateInstance)]
         [RubyMethod("Integer", RubyMethodAttributes.PublicSingleton)]
         public static object/*!*/ ToInteger(object self, [NotNull]MutableString/*!*/ value) {
