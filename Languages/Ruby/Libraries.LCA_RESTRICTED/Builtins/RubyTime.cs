@@ -669,11 +669,38 @@ namespace IronRuby.Builtins {
             return AddSeconds(self, 1.0);
         }
 
+        private static double GetSecondsFromOffsetObject(ConversionStorage<IntegerValue>/*!*/ integerConversion, Object offset) {
+            if (offset is double) {
+                return (double)offset;
+            }
+
+            // TODO: add support for Object#to_r and Rational
+
+            try {
+                IntegerValue seconds = offset is IntegerValue
+                    ? (IntegerValue)offset
+                    : Protocols.CastToInteger(integerConversion, offset);
+                return (double)(seconds.IsFixnum ? seconds.Fixnum : seconds.Bignum);
+            }
+            catch (InvalidOperationException) {
+                string objectClassName = integerConversion.Context.GetClassName(offset);
+                throw RubyExceptions.CreateTypeError("can't convert {0} into an exact number", objectClassName);
+            }
+        }
+
         [RubyMethod("+")]
-        public static RubyTime/*!*/ AddSeconds(RubyTime/*!*/ self, [DefaultProtocol]double seconds) {
+        public static RubyTime/*!*/ AddSeconds(ConversionStorage<IntegerValue>/*!*/ integerConversion, 
+            RubyTime/*!*/ self, Object offset) {
+
+            return AddSeconds(self, GetSecondsFromOffsetObject(integerConversion, offset));
+        }
+
+        [RubyMethod("+")]
+        public static RubyTime/*!*/ AddSeconds(RubyTime/*!*/ self, double seconds) {
             try {
                 return new RubyTime(RubyTime.AddSeconds(self.DateTime, seconds));
-            } catch (OverflowException) {
+            }
+            catch (OverflowException) {
                 throw RubyExceptions.CreateRangeError("time + {0:F6} out of Time range", seconds);
             }
         }
@@ -684,7 +711,14 @@ namespace IronRuby.Builtins {
         }
 
         [RubyMethod("-")]
-        public static RubyTime/*!*/ SubtractSeconds(RubyTime/*!*/ self, [DefaultProtocol]double seconds) {
+        public static RubyTime/*!*/ SubtractSeconds(ConversionStorage<IntegerValue>/*!*/ integerConversion,
+            RubyTime/*!*/ self, Object offset) {
+
+            return SubtractSeconds(self, GetSecondsFromOffsetObject(integerConversion, offset));
+        }
+
+        [RubyMethod("-")]
+        public static RubyTime/*!*/ SubtractSeconds(RubyTime/*!*/ self, double seconds) {
             DateTime result;
             try {
                 result = RubyTime.AddSeconds(self.DateTime, -seconds);
