@@ -225,7 +225,7 @@ namespace IronRuby.Builtins {
         /// <returns>self divided by other as Float</returns>
         [RubyMethod("div")]
         public static object Divide(BigInteger/*!*/ self, double other) {
-            if (other == 0.0) {
+            if (other == 0d) {
                 throw new FloatDomainError("NaN");
             }
 
@@ -460,7 +460,7 @@ namespace IronRuby.Builtins {
         /// <remarks>Normalizes div to Fixnum as necessary</remarks>
         [RubyMethod("divmod")]
         public static RubyArray DivMod(BigInteger/*!*/ self, double other) {
-            if (other == 0.0) {
+            if (other == 0d) {
                 throw new DivideByZeroException();
             }
             if (Double.IsNaN(other)) {
@@ -528,7 +528,7 @@ namespace IronRuby.Builtins {
         /// <returns>Float</returns>
         [RubyMethod("remainder")]
         public static double Remainder(BigInteger/*!*/ self, double other) {
-            if (other == 0.0) {
+            if (other == 0d) {
                 throw new DivideByZeroException();
             }
 
