@@ -1280,8 +1280,9 @@ namespace IronRuby.Builtins {
         
         private static void JoinRecursive(ConversionStorage<MutableString>/*!*/ tosConversion, 
             IList/*!*/ list, List<MutableString/*!*/>/*!*/ parts, 
-            ref bool? isBinary, ref bool taint, ref Dictionary<object, bool> seen) {
+            ref bool? isBinary, ref bool taint, ref bool untrust, ref Dictionary<object, bool> seen) {
 
+            var context = tosConversion.Context;
             foreach (object item in list) {
                 IList listItem;
                 if ((listItem = item as IList) != null) {
@@ -1294,19 +1295,21 @@ namespace IronRuby.Builtins {
                         }
 
                         seen.Add(listItem, true);
-                        JoinRecursive(tosConversion, listItem, parts, ref isBinary, ref taint, ref seen);
+                        JoinRecursive(tosConversion, listItem, parts, ref isBinary, ref taint, ref untrust, ref seen);
                         seen.Remove(listItem);
 
-                        taint |= tosConversion.Context.IsObjectTainted(listItem);
+                        taint |= context.IsObjectTainted(listItem);
+                        untrust |= context.IsObjectUntrusted(listItem);
                     }
                 } else if (item != null) {
                     var tosSite = tosConversion.Site;
                     if (tosSite == null) {
-                        tosSite = tosConversion.GetSite(ConvertToSAction.Make(tosConversion.Context));
+                        tosSite = tosConversion.GetSite(ConvertToSAction.Make(context));
                     }
                     var strItem = tosSite.Target(tosSite, item);
                     parts.Add(strItem);
                     taint |= strItem.IsTainted;
+                    untrust |= strItem.IsUntrusted;
                     isBinary = isBinary.HasValue ? (isBinary | strItem.IsBinary) : strItem.IsBinary;
                 } else {
                     parts.Add(null);
@@ -1317,10 +1320,11 @@ namespace IronRuby.Builtins {
         public static MutableString/*!*/ Join(ConversionStorage<MutableString>/*!*/ tosConversion, IList/*!*/ self, MutableString/*!*/ separator) {
             var parts = new List<MutableString>(self.Count);
             bool partTainted = false;
+            bool partUntrusted = false;
             bool? isBinary = (separator != null) ? separator.IsBinary : (bool?)null;
             Dictionary<object, bool> seen = null;
             
-            JoinRecursive(tosConversion, self, parts, ref isBinary, ref partTainted, ref seen);
+            JoinRecursive(tosConversion, self, parts, ref isBinary, ref partTainted, ref partUntrusted, ref seen);
             if (parts.Count == 0) {
                 return MutableString.CreateEmpty();
             }
@@ -1358,6 +1362,10 @@ namespace IronRuby.Builtins {
             result.IsTainted |= partTainted;
             if (!result.IsTainted && (separator != null && separator.IsTainted || tosConversion.Context.IsObjectTainted(self))) {
                 result.IsTainted = true;
+            }
+            result.IsUntrusted |= partUntrusted;
+            if (!result.IsUntrusted && (separator != null && separator.IsUntrusted || tosConversion.Context.IsObjectUntrusted(self))) {
+                result.IsUntrusted = true;
             }
             return result;
         }
