@@ -1068,56 +1068,55 @@ namespace IronRuby.Builtins {
             return result;
         }
 
-        class FormatSpecifierOptions {
+        private class FormatSpecifierOptions {
             public FormatSpecifierOptions() {
                 PaddingCharacter = ' ';
+                PaddingLength = 0;
+                PreventPadding = false;
+                UpperCase = false;
             }
 
-            public bool UpperCase { get; set; }
-            public bool PreventPadding { get; set; }
             public char PaddingCharacter { get; set; }
             public int PaddingLength { get; set; }
+            public bool PreventPadding { get; set; }
+            public bool UpperCase { get; set; }
         }
 
-        private static FormatSpecifierOptions ExtractSpecifierOptions(MutableString.CharacterEnumerator charEnum, MutableString optionsBuffer) {
+        private static FormatSpecifierOptions ExtractSpecifierOptions(MutableString.CharacterEnumerator/*!*/ charEnum, MutableString/*!*/ optionsBuffer) {
             FormatSpecifierOptions options = new FormatSpecifierOptions();
             optionsBuffer.Clear();
 
             // Extract the options for the current format specifier
-            while (charEnum.HasMore) {
+            do {
                 var character = charEnum.Current;
                 int c = character.IsValid ? character.Value : -1;
                 switch (c) {
                     case '_':   // Pad with spaces
                         options.PaddingCharacter = ' ';
                         optionsBuffer.Append((char)c);
-                        charEnum.MoveNext();
                         continue;
 
                     case '0':   // Pad with zero
                         options.PaddingCharacter = '0';
                         optionsBuffer.Append((char)c);
-                        charEnum.MoveNext();
                         continue;
 
                     case '-':   // Do not pad (overriding any pad option)
                         options.PreventPadding = true;
                         optionsBuffer.Append((char)c);
-                        charEnum.MoveNext();
                         continue;
 
                     case '^':   // To uppercase
                         options.UpperCase = true;
                         optionsBuffer.Append((char)c);
-                        charEnum.MoveNext();
                         continue;
                 }
                 break;
-            }
+            } while (charEnum.MoveNext());
 
             // Extract the padding length
             string padLengthBuffer = String.Empty;
-            while (charEnum.HasMore) {
+            do {
                 var character = charEnum.Current;
                 int c = character.IsValid ? character.Value : -1;
                 switch (c) {
@@ -1132,11 +1131,10 @@ namespace IronRuby.Builtins {
                     case '8':
                     case '9':
                         padLengthBuffer += (char)c;
-                        charEnum.MoveNext();
                         continue;
                 }
                 break;
-            }
+            } while (charEnum.MoveNext());
 
             if (padLengthBuffer != String.Empty) {
                 int padLen;
@@ -1147,18 +1145,18 @@ namespace IronRuby.Builtins {
             return options;
         }
 
-        private static void FormatDayOfWeek(MutableString/*!*/ result, FormatSpecifierOptions options, DateTime dateTime, int start) {
+        private static void FormatDayOfWeek(MutableString/*!*/ result, FormatSpecifierOptions/*!*/ options, DateTime dateTime, int start) {
             DateTime firstDay = dateTime.AddDays(1 - dateTime.DayOfYear);
             DateTime firstSunday = firstDay.AddDays((start - (int)firstDay.DayOfWeek) % 7);
             int week = 1 + (int)Math.Floor((dateTime - firstSunday).Days / 7.0);
             Format(result, options, String.Format("{0:00}", week));
         }
 
-        private static void Format(MutableString result, FormatSpecifierOptions options, String format, RubyTime time) {
+        private static void Format(MutableString/*!*/ result, FormatSpecifierOptions options/*!*/, String/*!*/ format, RubyTime/*!*/ time) {
             Format(result, options, time.DateTime.ToString(format, CultureInfo.InvariantCulture));
         }
 
-        private static void Format(MutableString result, FormatSpecifierOptions options, String str) {
+        private static void Format(MutableString/*!*/ result, FormatSpecifierOptions/*!*/ options, String/*!*/ str) {
             if (options.UpperCase) {
                 str = str.ToUpperInvariant();
             }
